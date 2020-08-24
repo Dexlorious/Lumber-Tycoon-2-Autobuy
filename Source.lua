@@ -19,7 +19,7 @@ local TextLabel_3 = Instance.new("TextLabel")
 --Properties:
 
 Autobuy.Name = "Autobuy"
-Autobuy.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+Autobuy.Parent = game:GetService("CoreGui")
 
 Frame.Parent = Autobuy
 Frame.Draggable = true
@@ -139,7 +139,7 @@ local function OMBXKZA_fake_script() -- Frame.LocalScript
 	local script = Instance.new('LocalScript', Frame)
 
 	local method = "tween"
-	local IDs = {
+	local IDs = { -- Shop IDs
 		WoodRUs = 11,
 		FurnitureStore = 10,
 		CarStore = 12,
@@ -148,7 +148,7 @@ local function OMBXKZA_fake_script() -- Frame.LocalScript
 		FineArt = 14,
 	}
 	
-	local Remote = game.ReplicatedStorage.NPCDialog['PlayerChatted']
+	local Remote = game.ReplicatedStorage.NPCDialog['PlayerChatted'] -- NPC Chat Remote
 	
 	function state(t)
 		script.Parent.State.Text = t
