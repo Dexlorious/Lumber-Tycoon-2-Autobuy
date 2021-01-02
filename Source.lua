@@ -560,29 +560,41 @@ local function WMFA_fake_script() -- ScreenGui.LocalScript
 		root.CFrame = cf
 	end
 	
-	local IDs = {
-		WoodRUs = 11,
-		FurnitureStore = 10,
-		CarStore = 12,
-		ShackShop = 13,
-		LogicStore = 15,
-		FineArt = 14,
-	}
+	local IDs = {}
+
+    do
+        local _b={{"Thom",workspace.Stores.WoodRUs.Thom},{"Corey",workspace.Stores.FurnitureStore.Corey},
+        {"Jenny",workspace.Stores.CarStore.Jenny},{"Bob",workspace.Stores.ShackShop.Bob},
+        {"Timothy",workspace.Stores.FineArt.Timothy},{"Lincoln",workspace.Stores.LogicStore.Lincoln}}local ab={}
+        local bb=game.ReplicatedStorage.NPCDialog.PromptChat
+        local cb=game:GetService("ReplicatedStorage").NPCDialog.PlayerChatted
+        local db=game:GetService("ReplicatedStorage").NPCDialog.SetChattingValue;db:InvokeServer(true)local _c
+        local ac=bb.OnClientEvent:Connect(function(bc,cc,dc)_c=cc end)
+        for bc,cc in pairs(_b)do if not cc[2]:FindFirstChild("Dialog")then
+        Instance.new("Dialog",cc[2])end
+        bb:FireServer(true,cc[2],cc[2].Dialog)repeat wait()until _c;ab[cc[2].Name]=_c.ID;_c=nil end;db:InvokeServer(false)
+        IDs.WoodRUs = ab.Thom
+        IDs.FurnitureStore = ab.Corey
+        IDs.CarStore = ab.Jenny
+        IDs.ShackShop = ab.Bob
+        IDs.LogicStore = ab.Lincoln
+        IDs.FineArt = ab.Timothy
+    end
 	
 	local Remote = game.ReplicatedStorage.NPCDialog.PlayerChatted
 	
 	function GetStoreEmployee(ID)
-		if ID == 11 then
+		if ID == IDs.WoodRUs then
 			return "Thom"
-		elseif ID == 10 then
+		elseif ID == IDs.FurnitureStore then
 			return "Corey"
-		elseif ID == 12 then
+		elseif ID == IDs.CarStore then
 			return "Jenny"
-		elseif ID == 13 then
+		elseif ID == IDs.ShackShop then
 			return "Bob"
-		elseif ID == 15 then
+		elseif ID == IDs.LogicStore then
 			return "Lincoln"
-		elseif ID == 14 then
+		elseif ID == IDs.FineArt then
 			return "Timothy"
 		end
 	end
@@ -594,6 +606,9 @@ local function WMFA_fake_script() -- ScreenGui.LocalScript
 				v.Name ~= "ShackShop" and v.Name ~= "WoodRUs" and v.Name ~= "LandStore" then
 				for _,a in pairs(v:GetChildren()) do
 					if a.Name:lower() == name:lower() then
+					    pcall(function()
+					        game.ReplicatedStorage.Interaction.ClientIsDragging:FireServer(a)
+					    end)
 						if closest[1] then
 							if (closest[1].Main.CFrame.p-a.Main.CFrame.p).Magnitude < closest[2] then
 								closest = {a,(closest[1].Main.CFrame.p-a.Main.CFrame.p).Magnitude}
@@ -610,6 +625,12 @@ local function WMFA_fake_script() -- ScreenGui.LocalScript
 	end
 	
 	function GetRegister(item)
+	    if not item then
+	        return
+	    end
+	    if not item:FindFirstChild("Main") then
+	        return
+	    end
 		local c = {nil,math.huge}
 		for i,v in pairs(workspace.Stores:GetChildren()) do
 			if v:FindFirstChild("Counter") then
@@ -637,7 +658,40 @@ local function WMFA_fake_script() -- ScreenGui.LocalScript
 		local items = {}
 		local ocf = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
 		local num = (tonumber(main.Amount.Text) and tonumber(main.Amount.Text) or 1)
+		local buying = true
+	    
+	    spawn(function()
+    	    while buying do
+    	        if not arg1 then
+    	            print("Waiting For Argument 1")
+    	            repeat wait() until arg1
+    	        end
+    	        if not gui or not gui.Parent then
+    	            break
+    	        end
+                Remote:InvokeServer(arg1,"Initiate")
+                Remote:InvokeServer(arg1,"ConfirmPurchase")
+                Remote:InvokeServer(arg1,"EndChat")
+    	    end
+	    end)
+		
 		for i = 1,num do
+		    repeat wait() until item(itemn)
+		    local reg
+		    repeat wait()
+		        reg = GetRegister(item(itemn))
+		    until reg
+		    
+			local ID = IDs[reg.Parent.Name]
+			if not reg.Parent[GetStoreEmployee(ID)]:FindFirstChild("Dialog") then
+			    Instance.new("Dialog",reg.Parent[GetStoreEmployee(ID)])
+		    end
+		    arg1 = {
+    			["ID"] = ID,
+    			["Character"] = reg.Parent[GetStoreEmployee(ID)],
+    			["Name"] = GetStoreEmployee(ID),
+    			["Dialog"] = reg.Parent[GetStoreEmployee(ID)].Dialog
+    		}
 			state("Buying "..i.."/"..num)
 			local obj = item(itemn)
 			if not obj then
@@ -647,51 +701,38 @@ local function WMFA_fake_script() -- ScreenGui.LocalScript
 				until obj
 			end
 			if obj then
-				local reg = GetRegister(obj)
-				local ID = IDs[reg.Parent.Name]
-				Teleport(obj.Main.CFrame * CFrame.new(3,0,0),100,function()game.ReplicatedStorage.TestPing:InvokeServer()wait(0.1)end)
+				Teleport(obj.Main.CFrame * CFrame.new(3,0,0),100,function()game.ReplicatedStorage.TestPing:InvokeServer()wait()end)
+				obj.Main.CFrame = reg.CFrame * CFrame.new(0,obj.Main.Size.Y/2,0)
+				game.ReplicatedStorage.Interaction.ClientIsDragging:FireServer(obj)
 				
-				for i = 1,5 do
-					obj.Main.CFrame = reg.CFrame * CFrame.new(0,obj.Main.Size.Y/2,0)
-					game.ReplicatedStorage.Interaction.ClientIsDragging:FireServer(obj)
-					wait()
-				end
 				if not reg.Parent[GetStoreEmployee(ID)]:FindFirstChild("Dialog") then
 					Instance.new("Dialog",reg.Parent[GetStoreEmployee(ID)])
 				end
-				local arg1 = {
-					["ID"] = ID,
-					["Character"] = reg.Parent[GetStoreEmployee(ID)],
-					["Name"] = GetStoreEmployee(ID),
-					["Dialog"] = reg.Parent[GetStoreEmployee(ID)].Dialog
-				}
-				print(game.HttpService:JSONEncode(arg1))
 				table.insert(items,obj)
-				for i = 1,2 do
-					Remote:InvokeServer(arg1,"Initiate")
-					Remote:InvokeServer(arg1,"ConfirmPurchase")
-					Remote:InvokeServer(arg1,"EndChat")
-				end
+				wait(0.1)
 			end
 		end
+		wait(0.6)
 		game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = items[1].Main.CFrame
 		state("Teleporting Items")
+		buying = false
+		arg1 = false
 		for i,v in pairs(items) do
 			for _,a in pairs(items) do
 				game.ReplicatedStorage.Interaction.ClientIsDragging:FireServer(a)
 			end
 			game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.Main.CFrame
-			wait(0.1)
 			for i = 1,5 do
 				pcall(function()
+				    v:MoveTo(ocf.p)
 					v.Main.CFrame = ocf
 					game.ReplicatedStorage.Interaction.ClientIsDragging:FireServer(v)
-					wait(0.05)
+					wait()
 				end)
 			end
 		end
 		state("Teleporting Back")
-		Teleport(ocf,100,function()game.ReplicatedStorage.TestPing:InvokeServer()wait(0.1)end)
+		Teleport(ocf,100,function()game.ReplicatedStorage.TestPing:InvokeServer()wait()end)
 		state("Done")
 		wait()
 		state("Idle")
@@ -811,4 +852,3 @@ local function WMFA_fake_script() -- ScreenGui.LocalScript
 	
 end
 coroutine.wrap(WMFA_fake_script)()
-
